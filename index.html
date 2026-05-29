@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>極簡德州撲克遊戲</title>
+    <style>
+        body { font-family: sans-serif; background: #2d5a27; color: white; text-align: center; }
+        .table { border: 2px solid #fff; border-radius: 50px; width: 80%; margin: 20px auto; padding: 20px; min-height: 400px; }
+        .card-area { display: flex; justify-content: center; gap: 10px; margin: 10px; min-height: 120px; }
+        .card { background: white; color: black; width: 60px; height: 90px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
+        .red { color: red; }
+        .controls { margin-top: 20px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; border-radius: 5px; border: none; }
+        #message { font-size: 24px; color: yellow; margin: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>簡單德州撲克 (VS 電腦)</h1>
+    
+    <div class="table">
+        <div id="opponent-area">
+            <h3>對手手牌</h3>
+            <div id="opponent-cards" class="card-area"></div>
+        </div>
+
+        <div id="community-area">
+            <h3>公共牌 (Community Cards)</h3>
+            <div id="community-cards" class="card-area"></div>
+        </div>
+
+        <div id="player-area">
+            <h3>你的手牌</h3>
+            <div id="player-cards" class="card-area"></div>
+        </div>
+    </div>
+
+    <div id="message">準備好開始了嗎？</div>
+
+    <div class="controls">
+        <button id="deal-btn" onclick="startGame()">發牌</button>
+        <button id="next-btn" onclick="nextStage()" style="display:none;">下一階段</button>
+    </div>
+
+    <script>
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let deck = [], playerHand = [], opponentHand = [], communityCards = [], stage = 0;
+
+        function createDeck() {
+            deck = [];
+            for (let s of suits) {
+                for (let v of values) {
+                    deck.push({ suit: s, value: v, color: (s === '♥' || s === '♦') ? 'red' : 'black' });
+                }
+            }
+            deck.sort(() => Math.random() - 0.5);
+        }
+
+        function createCardUI(card, hidden = false) {
+            const div = document.createElement('div');
+            div.className = 'card' + (card.color === 'red' ? ' red' : '');
+            div.textContent = hidden ? '?' : `${card.value}${card.suit}`;
+            if (hidden) div.style.background = '#ccc';
+            return div;
+        }
+
+        function startGame() {
+            createDeck();
+            playerHand = [deck.pop(), deck.pop()];
+            opponentHand = [deck.pop(), deck.pop()];
+            communityCards = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+            stage = 0;
+
+            document.getElementById('player-cards').innerHTML = '';
+            document.getElementById('opponent-cards').innerHTML = '';
+            document.getElementById('community-cards').innerHTML = '';
+            
+            playerHand.forEach(c => document.getElementById('player-cards').appendChild(createCardUI(c)));
+            opponentHand.forEach(() => document.getElementById('opponent-cards').appendChild(createCardUI({}, true)));
+
+            document.getElementById('deal-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'inline-block';
+            document.getElementById('message').textContent = "遊戲開始！請翻開公共牌";
+        }
+
+        function nextStage() {
+            const commDiv = document.getElementById('community-cards');
+            stage++;
+            if (stage === 1) { // Flop
+                for (let i = 0; i < 3; i++) commDiv.appendChild(createCardUI(communityCards[i]));
+                document.getElementById('message').textContent = "翻牌圈 (Flop)";
+            } else if (stage === 2) { // Turn
+                commDiv.appendChild(createCardUI(communityCards[3]));
+                document.getElementById('message').textContent = "轉牌圈 (Turn)";
+            } else if (stage === 3) { // River
+                commDiv.appendChild(createCardUI(communityCards[4]));
+                document.getElementById('message').textContent = "河牌圈 (River) - 最後攤牌！";
+            } else {
+                showdown();
+            }
+        }
+
+        function showdown() {
+            document.getElementById('opponent-cards').innerHTML = '';
+            opponentHand.forEach(c => document.getElementById('opponent-cards').appendChild(createCardUI(c)));
+            
+            // 簡化邏輯：這裡僅隨機模擬勝負，實際開發需導入牌型判斷程式碼
+            const win = Math.random() > 0.5;
+            document.getElementById('message').textContent = win ? "你贏了！🎉" : "電腦贏了！💸";
+            
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('deal-btn').style.display = 'inline-block';
+            document.getElementById('deal-btn').textContent = "再玩一次";
+        }
+    </script>
+</body>
+</html>
