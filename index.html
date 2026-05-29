@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>德州撲克</title>
     <style>
-        :root { --table-green: #1a472a; --border-gold: #c5a059; --card-white: #ffffff; }
+        :root { --table-green: #1a472a; --border-gold: #c5a059; }
         body { font-family: sans-serif; background: #121212; color: white; display: flex; flex-direction: column; align-items: center; margin: 0; }
         .game-container { width: 100%; max-width: 1000px; padding: 10px; }
-        
-        /* 圓形撲克桌 */
         .poker-table {
             background: var(--table-green);
             border: 10px solid #3d2b1f;
@@ -17,39 +15,34 @@
             padding: 20px;
             position: relative;
             margin: 20px 0;
-            min-height: 450px;
+            min-height: 480px;
             box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
         }
-
-        /* 玩家佈局 */
-        .player-slot { position: absolute; text-align: center; width: 120px; }
-        .p-0 { bottom: 10px; left: 50%; transform: translateX(-50%); color: #f1c40f; } /* 玩家自己 */
-        .p-1 { left: 10px; top: 50%; transform: translateY(-50%); } /* Ken */
-        .p-2 { left: 150px; top: 10px; } /* Gen */
-        .p-3 { right: 150px; top: 10px; } /* Ki */
-        .p-4 { right: 10px; top: 50%; transform: translateY(-50%); } /* Fi */
-        .p-5 { left: 50%; top: -30px; transform: translateX(-50%); } /* Li (備用) */
-
+        .player-slot { position: absolute; text-align: center; width: 120px; transition: all 0.3s; }
+        .p-0 { bottom: 15px; left: 50%; transform: translateX(-50%); color: #f1c40f; border: 2px solid #f1c40f; border-radius: 10px; padding: 5px; } 
+        .p-1 { left: 10px; top: 50%; transform: translateY(-50%); } 
+        .p-2 { left: 150px; top: 10px; } 
+        .p-3 { right: 150px; top: 10px; } 
+        .p-4 { right: 10px; top: 50%; transform: translateY(-50%); } 
         .card-area { display: flex; justify-content: center; gap: 5px; height: 70px; margin-top: 5px; }
         .card { 
             background: white; color: black; width: 45px; height: 65px; border-radius: 5px; 
             display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
         }
         .red { color: #e74c3c; }
-        .folded { opacity: 0.3; filter: grayscale(1); }
+        .folded { opacity: 0.2; filter: grayscale(1); }
         .hidden-card { background: linear-gradient(135deg, #2c3e50, #000); border: 1px solid #fff; }
-
-        .community-area {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            display: flex; gap: 10px;
-        }
-
-        .info-bar { background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; display: flex; gap: 20px; margin-bottom: 10px; }
-        .controls { margin-top: 20px; display: flex; gap: 10px; }
-        button { padding: 10px 20px; border-radius: 20px; border: none; cursor: pointer; font-weight: bold; background: var(--border-gold); }
-        button:disabled { background: #555; cursor: not-allowed; }
-        #message { color: #f1c40f; font-size: 18px; margin: 10px; height: 24px; }
+        .community-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -80%); display: flex; gap: 10px; }
+        .info-bar { background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; display: flex; justify-content: center; gap: 40px; margin-bottom: 10px; border: 1px solid var(--border-gold); }
+        .controls { margin-top: 20px; display: flex; gap: 10px; justify-content: center; }
+        button { padding: 12px 24px; border-radius: 25px; border: none; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
+        .btn-raise { background: #e67e22; color: white; }
+        .btn-check { background: var(--border-gold); color: #3d2b1f; }
+        .btn-fold { background: #7f8c8d; color: white; }
+        button:hover:not(:disabled) { transform: scale(1.05); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #message { color: #f1c40f; font-size: 18px; margin: 15px; height: 24px; text-align: center; }
     </style>
 </head>
 <body>
@@ -57,26 +50,26 @@
     <div class="game-container">
         <h1>Five-Player Texas Hold'em</h1>
         <div class="info-bar">
-            <div>底池 Pot: <span id="pot-val">0</span></div>
-            <div>你的籌碼: <span id="my-chips">1000</span></div>
+            <div>底池 Pot: <span id="pot-val" style="font-size:24px; color:#f1c40f;">0</span></div>
+            <div>你的籌碼: <span id="my-chips" style="font-size:24px;">1000</span></div>
         </div>
 
         <div class="poker-table">
             <div class="community-area" id="comm-cards"></div>
-
             <div id="player-0" class="player-slot p-0"><div>你 (Player)</div><div class="card-area"></div><div class="chips">1000</div></div>
-            <div id="player-1" class="player-slot p-1"><div>NIGA (AI)</div><div class="card-area"></div><div class="chips">1000</div></div>
-            <div id="player-2" class="player-slot p-2"><div>HOMO (AI)</div><div class="card-area"></div><div class="chips">1000</div></div>
-            <div id="player-3" class="player-slot p-3"><div>BITCH (AI)</div><div class="card-area"></div><div class="chips">1000</div></div>
-            <div id="player-4" class="player-slot p-4"><div>SHIT (AI)</div><div class="card-area"></div><div class="chips">1000</div></div>
+            <div id="player-1" class="player-slot p-1"><div>NIGA</div><div class="card-area"></div><div class="chips">1000</div></div>
+            <div id="player-2" class="player-slot p-2"><div>HOMO</div><div class="card-area"></div><div class="chips">1000</div></div>
+            <div id="player-3" class="player-slot p-3"><div>BITCH</div><div class="card-area"></div><div class="chips">1000</div></div>
+            <div id="player-4" class="player-slot p-4"><div>SHIT</div><div class="card-area"></div><div class="chips">1000</div></div>
         </div>
 
-        <div id="message">準備好對戰了嗎？</div>
+        <div id="message">準備好大贏一場了嗎？</div>
 
         <div class="controls">
-            <button id="btn-start" onclick="startNewGame()">開始新局 (底注 20)</button>
-            <button id="btn-next" onclick="nextStage()" style="display:none;">下一階段</button>
-            <button id="btn-fold" onclick="playerFold()" style="display:none; background: #95a5a6;">棄牌 Fold</button>
+            <button id="btn-start" class="btn-check" onclick="startNewGame()">開始新局 (底注 20)</button>
+            <button id="btn-next" class="btn-check" onclick="nextStage()" style="display:none;">過牌/看牌 (Check)</button>
+            <button id="btn-raise" class="btn-raise" onclick="playerRaise()" style="display:none;">加注 +50 (Raise)</button>
+            <button id="btn-fold" class="btn-fold" onclick="playerFold()" style="display:none;">棄牌 (Fold)</button>
         </div>
     </div>
 
@@ -114,7 +107,7 @@
             players.forEach((p, i) => {
                 const slot = document.getElementById(`player-${i}`);
                 const area = slot.querySelector('.card-area');
-                slot.querySelector('.chips').textContent = p.chips;
+                slot.querySelector('.chips').textContent = `$${p.chips}`;
                 area.innerHTML = '';
                 if (p.isFolded) {
                     slot.classList.add('folded');
@@ -127,74 +120,86 @@
         }
 
         function startNewGame() {
-            createDeck();
-            pot = 0;
+            createDeck(); pot = 0; stage = 0;
             commCards = Array.from({length:5}, () => deck.pop());
-            stage = 0;
-            
             players.forEach(p => {
-                if (p.chips < 20) p.chips += 500; // 沒錢自動補幣
+                if (p.chips < 50) p.chips += 1000;
                 p.chips -= 20; pot += 20;
                 p.hand = [deck.pop(), deck.pop()];
                 p.isFolded = false;
             });
-
             document.getElementById('comm-cards').innerHTML = '';
-            document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('btn-next').style.display = 'inline-block';
-            document.getElementById('btn-fold').style.display = 'inline-block';
-            document.getElementById('message').textContent = "遊戲開始，底注已扣除。";
+            setUI(true);
+            document.getElementById('message').textContent = "發牌完畢。你可以選擇加注或看牌。";
             updateDisplay();
         }
 
-        function aiLogic() {
-            // 簡單 AI 智商：如果兩張牌點數和小於 10 且不是對子，機率性棄牌
+        function setUI(inGame) {
+            document.getElementById('btn-start').style.display = inGame ? 'none' : 'inline-block';
+            document.getElementById('btn-next').style.display = inGame ? 'inline-block' : 'none';
+            document.getElementById('btn-raise').style.display = inGame ? 'inline-block' : 'none';
+            document.getElementById('btn-fold').style.display = inGame ? 'inline-block' : 'none';
+        }
+
+        function playerRaise() {
+            if (players[0].chips < 50) return alert("籌碼不足！");
+            players[0].chips -= 50; pot += 50;
+            document.getElementById('message').textContent = "你加注了 50！電腦正在考慮...";
+            
+            // AI 反應
             players.forEach((p, i) => {
                 if (p.isAI && !p.isFolded) {
                     const score = p.hand[0].n + p.hand[1].n;
-                    const isPair = p.hand[0].v === p.hand[1].v;
-                    // 如果點數太小且不是對子，30% 機率棄牌
-                    if (score < 12 && !isPair && Math.random() < 0.3) {
+                    // 如果點數和小於 14 且不是對子，50% 機率被嚇跑棄牌
+                    if (score < 14 && p.hand[0].v !== p.hand[1].v && Math.random() < 0.5) {
                         p.isFolded = true;
+                    } else {
+                        p.chips -= 50; pot += 50; // 跟注
                     }
                 }
             });
+            updateDisplay();
+            // 加注後自動進入下一階段
+            setTimeout(nextStage, 600);
         }
 
         function playerFold() {
             players[0].isFolded = true;
-            nextStage();
+            document.getElementById('message').textContent = "你棄牌了。";
+            updateDisplay();
+            // 自動跑完後續
+            let timer = setInterval(() => {
+                if (stage < 3) nextStage();
+                else { showdown(); clearInterval(timer); }
+            }, 500);
         }
 
         function nextStage() {
+            if (stage >= 3) { showdown(); return; }
             stage++;
             const area = document.getElementById('comm-cards');
-            aiLogic();
-
             if (stage === 1) { // Flop
                 for(let i=0; i<3; i++) area.appendChild(renderCard(commCards[i], false));
-                document.getElementById('message').textContent = "翻牌圈 Flop - 看看誰棄牌了？";
-            } else if (stage === 2) {
+                document.getElementById('message').textContent = "翻牌圈 Flop";
+            } else if (stage === 2) { // Turn
                 area.appendChild(renderCard(commCards[3], false));
                 document.getElementById('message').textContent = "轉牌圈 Turn";
-            } else if (stage === 3) {
+            } else if (stage === 3) { // River
                 area.appendChild(renderCard(commCards[4], false));
-                document.getElementById('message').textContent = "河牌圈 River - 最後攤牌！";
-            } else {
-                showdown();
+                document.getElementById('message').textContent = "河牌圈 River - 最後加注機會！";
             }
             updateDisplay();
         }
 
         function showdown() {
-            stage = 4; // 攤牌階段，顯示電腦牌
+            stage = 4;
             let bestScore = -1;
             let winner = null;
 
             players.forEach(p => {
                 if (!p.isFolded) {
-                    // 模擬判定：手牌分 + 隨機公共牌運氣
-                    let score = p.hand[0].n + p.hand[1].n + Math.floor(Math.random() * 30);
+                    // 比牌邏輯：底牌點數 + 隨機加成(模擬與公共牌的組合)
+                    let score = p.hand[0].n + p.hand[1].n + Math.floor(Math.random() * 25);
                     if (score > bestScore) {
                         bestScore = score;
                         winner = p;
@@ -204,13 +209,10 @@
 
             if (winner) {
                 winner.chips += pot;
-                document.getElementById('message').textContent = `本局結束！${winner.name} 贏得了 ${pot} 籌碼！`;
+                document.getElementById('message').textContent = `${winner.name} 贏得了底池 $${pot}！`;
             }
             pot = 0;
-            
-            document.getElementById('btn-next').style.display = 'none';
-            document.getElementById('btn-fold').style.display = 'none';
-            document.getElementById('btn-start').style.display = 'inline-block';
+            setUI(false);
             document.getElementById('btn-start').textContent = "下一局";
             updateDisplay();
         }
